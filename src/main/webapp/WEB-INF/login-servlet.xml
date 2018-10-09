@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-2.5.xsd 
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
+	http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop.xsd ">
+    
+	<aop:aspectj-autoproxy />
+	<!-- <aop:config> <aop:aspect id="loggingAspect" ref="empLogger"> <aop:before 
+		method="noArgLoggerBefore" pointcut="execution(* com.hexa..*Service.*(..))"/> 
+		<aop:after-returning method="noArgLoggerAfterReturn" returning="retVal" pointcut="execution(* 
+		com.hexa..*Service.*(..))"/> <aop:after method="noArgLoggerAfter" pointcut="execution(* 
+		com.hexa..*Service.*(..))"/> <aop:after-throwing method="noArgLoggerThrow" 
+		throwing = "ex" pointcut="execution(* com.hexa..*Service.*(..))"/> </aop:aspect> 
+		</aop:config> -->
+	<ctx:annotation-config />
+	<ctx:component-scan base-package="com.hexa.employee.register"></ctx:component-scan>
+
+	<bean id="service" class="com.hexa.employee.service.HexaService" />
+	<bean id="daoInterface" class="com.hexa.employee.dao.HexaDAO" />
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	<!-- <bean id="empLogger" class="com.hexa.employee.logger.EmpLogger"/> -->
+	<bean id="empLogger2" class="com.hexa.employee.logger.EmpLogger2" />
+	
+	
+	<ctx:property-placeholder location="classpath:db.properties"/>
+
+ <bean id="dataSource" destroy-method="close"
+      class="org.apache.commons.dbcp.BasicDataSource">
+   			 <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    		<property name="url" value="${jdbc.url}"/>
+    		<property name="username" value="${jdbc.username}"/>
+    	<property name="password" value="${jdbc.password}"/>
+	</bean>
+
+	 
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	
+	
+	
+<!-- The transaction advice - setting attributes for transactions -->
+<tx:advice id="txAdvice" transaction-manager="txManager">
+    <tx:attributes>
+        <tx:method name="get*" read-only="true" />
+        <tx:method name="add*" propagation="REQUIRED" />
+        <tx:method name="update*" propagation="REQUIRED" isolation="SERIALIZABLE" />
+        <tx:method name="remove*" propagation="REQUIRED" isolation="SERIALIZABLE" />
+        <tx:method name="*" />
+    </tx:attributes>
+</tx:advice>
+
+<aop:config>
+    <aop:pointcut id="serviceOperations"    expression="execution(* com.hexa.employee.dao.*.*(..))" />
+    <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceOperations" />
+</aop:config>
+	
+</beans>
